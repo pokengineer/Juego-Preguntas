@@ -1,0 +1,15 @@
+P: ¿Qué tipo de interrupción es un stack overflow?
+R: Software
+RC: Hardware – Interna
+R: Hardware – Externa
+R: Ninguna de las anteriores
+P: ¿cual es la letra d?
+R: aaaaaaaaaaa
+R: sssssssssss
+RC: ddddddddddd
+R: fffffffffff
+P: aca es ninguna de las anteriores
+R: qqqqqqqqqqq
+R: wwwwwwwwwww
+R: eeeeeeeeeee
+RC: Ninguna de las anteriores
