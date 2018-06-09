@@ -83,27 +83,74 @@ void *connection_handler(void *socket_desc)
     int sock = *(int *)socket_desc;
     int read_size;
     char *message, client_message[2000];
+    //
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    int puntaje = 0;
+    char mensaje[200];
+    //
+    fp = fopen("test.txt", "r");
+    //levanta el archivo de preguntas
+    if (fp == NULL)
+        exit(EXIT_FAILURE);
 
-    //Send some messages to the client
-    message = "Greetings! I am your connection handler\n";
-    write(sock, message, strlen(message));
-
-    //Receive a message from client
-    while ((read_size = recv(sock, client_message, 2000, 0)) > 0)
+    read = getline(&line, &len, fp);
+    while (!feof(fp))
     {
-        //Send the message back to client
-        write(sock, client_message, strlen(client_message));
+        int correcta = -1;
+        int i = 0;
+        if (*line == 'P') //si es pregunta
+        {
+            sprintf(mensaje, "\nPREGUNTA: %s", (line + 3 * sizeof(char)));
+            write(sock, mensaje, strlen(message)); //manda la pregunta
+
+            while ((read = getline(&line, &len, fp)) != -1 && *line == 'R')
+            {
+                //ahora mientras lleguen respuestas las mando
+                i++;
+                if (*(line + 1 * sizeof(char)) == 'C')
+                {
+                    correcta = i;
+                    //guardo si es la correcta
+                    sprintf(mensaje, "%d- %s", i, (line + 4 * sizeof(char)));
+                    write(sock, mensaje, strlen(message));
+                }
+                else
+                {
+                    sprintf(mensaje, "%d- %s", i, (line + 3 * sizeof(char)));
+                    write(sock, mensaje, strlen(message));
+                }
+            }
+        }
+
+        read_size = recv(sock, client_message, 2000, 0);
+        if (read_size == 0)
+        {
+            puts("se desconecto un jugador");
+            fflush(stdout);
+        }
+        else if (read_size == -1)
+        {
+            perror("error de recv");
+        }
+
+        int resp = 0;
+
+        if (resp == correcta)
+        {
+            puntaje++;
+        }
+        //comparo con tu respuesta
+
+        sleep(1);
     }
 
-    if (read_size == 0)
-    {
-        puts("Client disconnected");
-        fflush(stdout);
-    }
-    else if (read_size == -1)
-    {
-        perror("recv failed");
-    }
+    fclose(fp);
+    //cierro el file
+    if (line)
+        free(line);
 
     //Free the socket pointer
     close(sock);
