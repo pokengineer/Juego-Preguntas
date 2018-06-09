@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include<sys/socket.h>
+#include<arpa/inet.h> //inet_addr
 
 int main(int argc, char *argv[])
 {
