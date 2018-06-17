@@ -5,12 +5,19 @@
 #include <string.h>     //strlen
 #include <sys/socket.h> //socket
 #include <arpa/inet.h>  //inet_addr
+#include <unistd.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int main(int argc, char *argv[])
 {
     int sock;
     struct sockaddr_in server;
-    char message[1000], server_reply[2000], mensaje[200];
+    char message[1000], server_reply[2000];
+    char separator[5] = "|", chau[100] = "gracias, vuelva pronto", *flag = NULL;
 
     //Create socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -32,56 +39,41 @@ int main(int argc, char *argv[])
     }
 
     puts("Connected\n");
-    int resp;
+
     //keep communicating with server
     while (1)
     {
+        memset(server_reply, '\0', sizeof(server_reply));
         if (recv(sock, server_reply, 2000, 0) < 0)
         {
             puts("recv failed");
             break;
         }
-        puts("0: ");
-        puts(server_reply);
-        if (recv(sock, server_reply, 2000, 0) < 0)
+        flag = strstr(server_reply, separator);
+        while (flag == NULL)
         {
-            puts("recv failed");
-            break;
-        }
-        puts("1: ");
-        puts(server_reply);
-        if (recv(sock, server_reply, 2000, 0) < 0)
-        {
-            puts("recv failed");
-            break;
-        }
-        puts("2: ");
-        puts(server_reply);
-        if (recv(sock, server_reply, 2000, 0) < 0)
-        {
-            puts("recv failed");
-            break;
-        }
-        puts("3: ");
-        puts(server_reply);
+            puts(server_reply);
 
-        if (recv(sock, server_reply, 2000, 0) < 0)
-        {
-            puts("recv failed");
-            break;
+            memset(server_reply, '\0', sizeof(server_reply));
+            if (recv(sock, server_reply, 2000, 0) < 0)
+            {
+                puts("recv failed");
+                break;
+            }
+            flag = strstr(server_reply, separator);
         }
-        puts("4: ");
         puts(server_reply);
-
-        printf("\nescribi una respuesta: ");
-        while (scanf("%d", &resp) != 1)
+        flag = NULL;
+        flag = strstr(server_reply, chau);
+        if (flag)
         {
-            printf("\nPor favor ingresa un numero: ");
-            while (getchar() != '\n')
-                ;
+            break;
         }
 
-        sprintf(mensaje, "%d", resp);
+        printf("\nEnter message : ");
+        scanf("%s", message);
+
+        //Send some data
         if (send(sock, message, strlen(message), 0) < 0)
         {
             puts("Send failed");

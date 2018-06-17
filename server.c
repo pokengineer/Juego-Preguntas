@@ -46,12 +46,16 @@ int main(int argc, char *argv[])
     //Accept and incoming connection
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
+
+    // //Accept and incoming connection
+    // puts("Waiting for incoming connections...");
+    // c = sizeof(struct sockaddr_in);
     while ((client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c)))
     {
         puts("Connection accepted");
 
         pthread_t sniffer_thread;
-        new_sock = malloc(1);
+        new_sock = (int *)malloc(1);
         *new_sock = client_sock;
 
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *)new_sock) < 0)
@@ -61,7 +65,7 @@ int main(int argc, char *argv[])
         }
 
         //Now join the thread , so that we dont terminate before the thread
-        pthread_join(sniffer_thread, NULL);
+        //pthread_join( sniffer_thread , NULL);
         puts("Handler assigned");
     }
 
@@ -83,14 +87,15 @@ void *connection_handler(void *socket_desc)
     int sock = *(int *)socket_desc;
     int read_size;
     char *message, client_message[2000];
-    //
+    memset(client_message, '\0', sizeof(client_message));
+    char separator[5] = "|", chau[100]= "gracias, vuelva pronto";
+    ////////////////////////////////////////////////////////////
     FILE *fp;
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
     int puntaje = 0;
-    char mensaje[200];
-    //
+
     fp = fopen("test.txt", "r");
     //levanta el archivo de preguntas
     if (fp == NULL)
@@ -103,57 +108,73 @@ void *connection_handler(void *socket_desc)
         int i = 0;
         if (*line == 'P') //si es pregunta
         {
-            sprintf(mensaje, "\nPREGUNTA: %s", (line + 3 * sizeof(char)));
-            write(sock, mensaje, strlen(message)); //manda la pregunta
+            printf("\nPREGUNTA: %s", (line + 3 * sizeof(char)));
+            memset(client_message, '\0', sizeof(client_message));
+            strcpy(client_message, (line + 3 * sizeof(char)));
+            write(sock, client_message, strlen(client_message));
 
+            //no hace nada, la imporime nomas
             while ((read = getline(&line, &len, fp)) != -1 && *line == 'R')
             {
-                //ahora mientras lleguen respuestas las mando
+                //ahora mientras lleguen respuestas las muestro
                 i++;
                 if (*(line + 1 * sizeof(char)) == 'C')
                 {
                     correcta = i;
                     //guardo si es la correcta
-                    sprintf(mensaje, "%d- %s", i, (line + 4 * sizeof(char)));
-                    write(sock, mensaje, strlen(message));
+                    printf("%d- %s", i, (line + 4 * sizeof(char)));
+                    memset(client_message, '\0', sizeof(client_message));
+                    strcpy(client_message, (line + 4 * sizeof(char)));
+                    write(sock, client_message, strlen(client_message));
                 }
                 else
                 {
-                    sprintf(mensaje, "%d- %s", i, (line + 3 * sizeof(char)));
-                    write(sock, mensaje, strlen(message));
+                    printf("%d- %s", i, (line + 3 * sizeof(char)));
+                    memset(client_message, '\0', sizeof(client_message));
+                    strcpy(client_message, (line + 3 * sizeof(char)));
+                    write(sock, client_message, strlen(client_message));
                 }
             }
+            write(sock, separator, strlen(separator));
         }
 
-        read_size = recv(sock, client_message, 2000, 0);
-        if (read_size == 0)
+        memset(client_message, '\0', sizeof(client_message));
+        if (recv(sock, client_message, 2000, 0) < 0)
         {
-            puts("se desconecto un jugador");
-            fflush(stdout);
+            puts("recv failed");
+            break;
         }
-        else if (read_size == -1)
-        {
-            perror("error de recv");
-        }
-
-        int resp = 0;
-
+        int resp = client_message[0] - '0';
         if (resp == correcta)
         {
+            printf("bien ahi pisculichi\n");
             puntaje++;
         }
-        //comparo con tu respuesta
-
-        sleep(1);
+        puts(client_message);
     }
 
-    fclose(fp);
-    //cierro el file
-    if (line)
-        free(line);
+
+    puts("flag1");
+
+    char resultado[100];
+    sprintf(resultado, "hiciste %d puntos\n%s", puntaje, chau);
+    printf("hiciste %d puntos\n%s", puntaje, chau);
+    write(sock, resultado, strlen(resultado));
+    write(sock, separator, strlen(separator));
+
+    ///////////////////////////////////////////////////////////////
+
+    if (read_size == 0)
+    {
+        puts("Client disconnected");
+        fflush(stdout);
+    }
+    else if (read_size == -1)
+    {
+        perror("recv failed");
+    }
 
     //Free the socket pointer
-    close(sock);
     free(socket_desc);
 
     return 0;
