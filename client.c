@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 
     server.sin_addr.s_addr = inet_addr("127.0.0.1");
     server.sin_family = AF_INET;
-    server.sin_port = htons(8888);
+    server.sin_port = htons(8886);
 
     //Conectarse
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0)
@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
             flag = strstr(server_reply, separator);
         }
         puts(server_reply);
+
         flag = NULL;
         flag = strstr(server_reply, chau);
         if (flag)
@@ -85,6 +86,8 @@ int main(int argc, char *argv[])
             puts("Send failed");
             return 1;
         }
+
+
     }
 
     // //recoive quien es el ganador final
