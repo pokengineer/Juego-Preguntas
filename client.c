@@ -40,6 +40,17 @@ int main(int argc, char *argv[])
 
     puts("Connected\n");
 
+    puts("\nNombre : ");
+    scanf("%s", message);
+    //strcpy(message,"facu");
+    if ( send(sock, message, strlen(message), 0) < 0)
+    {
+        puts("Send failed");
+        return 1;
+    }
+    memset( message, '\0', sizeof(message));
+
+
     //Mantener comunicacion
     while (1)
     {
@@ -73,7 +84,7 @@ int main(int argc, char *argv[])
         printf("\nRespuesta : ");
         scanf("%s", message);
 
-        flag = strstr(server_reply, "chau" );  //el cliente puede abandonar el juego en cualquier momento escribiendo "chau"
+        flag = strstr(server_reply, "chau"); //el cliente puede abandonar el juego en cualquier momento escribiendo "chau"
         if (flag)
         {
             break;

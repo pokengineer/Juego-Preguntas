@@ -13,10 +13,21 @@
 //the thread function
 void *connection_handler(void *);
 
+//jugadores
+struct Jugador
+{
+    int sock;
+    int puntaje;
+    char nombre[100];
+};
+
 int main(int argc, char *argv[])
 {
     int socket_desc, client_sock, c, *new_sock;
     struct sockaddr_in server, client;
+    struct Jugador jugadores[10], *auxiliar;
+
+    int i = 0, show_leader=0;
 
     //Create socket
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
@@ -50,15 +61,16 @@ int main(int argc, char *argv[])
     // //Accept and incoming connection
     // puts("Waiting for incoming connections...");
     // c = sizeof(struct sockaddr_in);
-    while ((client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c)))
+    while ((client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c)) && (show_leader != 1)  )
     {
         puts("Connection accepted");
 
         pthread_t sniffer_thread;
         new_sock = (int *)malloc(1);
         *new_sock = client_sock;
-
-        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *)new_sock) < 0)
+        jugadores[i].sock = *new_sock;
+        auxiliar = &(jugadores[i++]);
+        if ( pthread_create( &sniffer_thread, NULL, connection_handler, (void *)auxiliar ) )
         {
             perror("could not create thread");
             return 1;
@@ -67,7 +79,21 @@ int main(int argc, char *argv[])
         //Now join the thread , so that we dont terminate before the thread
         //pthread_join( sniffer_thread , NULL);
         puts("Handler assigned");
+
+        // if( i > 3 )
+        // {
+        //     show_leader = 1;
+        // }
+    
     }
+
+    
+    for( Jugador item : jugadores )
+    {
+        printf(" %s \t\t %d puntos\n", item.nombre, item.puntaje );
+    }
+    
+
 
     if (client_sock < 0)
     {
@@ -81,20 +107,28 @@ int main(int argc, char *argv[])
 /*
  * This will handle connection for each client
  * */
-void *connection_handler(void *socket_desc)
+void *connection_handler(void *yo)
 {
     //Get the socket descriptor
-    int sock = *(int *)socket_desc;
+    int sock = (*(Jugador *)yo).sock;
     int read_size;
     char *message, client_message[2000];
     memset(client_message, '\0', sizeof(client_message));
-    char separator[5] = "|", chau[100]= "gracias, vuelva pronto", *flag = NULL;
+    char separator[5] = "|", chau[100] = "gracias, vuelva pronto", *flag = NULL;
     ////////////////////////////////////////////////////////////
     FILE *fp;
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
     int puntaje = 0;
+
+    memset(client_message, '\0', sizeof(client_message)); //recivo nombre
+    if (recv(sock, client_message, 2000, 0) < 0)
+    {
+        puts("recv failed");
+    }
+    strcpy( (*(Jugador *)yo).nombre, client_message );
+
 
     fp = fopen("test.txt", "r");
     //levanta el archivo de preguntas
@@ -108,7 +142,7 @@ void *connection_handler(void *socket_desc)
         int i = 0;
         if (*line == 'P') //si es pregunta
         {
-            printf("\nPREGUNTA: %s", (line + 3 * sizeof(char)));
+            //printf("\nPREGUNTA: %s", (line + 3 * sizeof(char)));
             memset(client_message, '\0', sizeof(client_message));
             strcpy(client_message, (line + 3 * sizeof(char)));
             write(sock, client_message, strlen(client_message));
@@ -122,20 +156,21 @@ void *connection_handler(void *socket_desc)
                 {
                     correcta = i;
                     //guardo si es la correcta
-                    printf("%d- %s", i, (line + 4 * sizeof(char)));
+                    //      printf("%d- %s", i, (line + 4 * sizeof(char)));
                     memset(client_message, '\0', sizeof(client_message));
                     strcpy(client_message, (line + 4 * sizeof(char)));
                     write(sock, client_message, strlen(client_message));
                 }
                 else
                 {
-                    printf("%d- %s", i, (line + 3 * sizeof(char)));
+                    //    printf("%d- %s", i, (line + 3 * sizeof(char)));
                     memset(client_message, '\0', sizeof(client_message));
                     strcpy(client_message, (line + 3 * sizeof(char)));
                     write(sock, client_message, strlen(client_message));
                 }
             }
             write(sock, separator, strlen(separator));
+            //escribe un separador para que el cliente sepa cuando parar de leer
         }
 
         memset(client_message, '\0', sizeof(client_message));
@@ -145,22 +180,21 @@ void *connection_handler(void *socket_desc)
             break;
         }
 
-        flag = strstr(client_message, "chau" ); //el cliente se desconecta
+        flag = strstr(client_message, "chau"); //el cliente se desconecta
         if (flag)
         {
             break;
         }
 
-
         int resp = client_message[0] - '0';
         if (resp == correcta)
         {
-            printf("bien ahi pisculichi\n");
+        //    printf("bien ahi\n");
             puntaje++;
+            (*(Jugador *)yo).puntaje++;
         }
-        puts(client_message);
+        //puts(client_message);
     }
-
 
     //puts("flag1");
 
@@ -171,7 +205,7 @@ void *connection_handler(void *socket_desc)
     write(sock, separator, strlen(separator));
 
     ///////////////////////////////////////////////////////////////
-    
+
     if (read_size == 0)
     {
         puts("Client disconnected");
@@ -182,8 +216,8 @@ void *connection_handler(void *socket_desc)
         perror("recv failed");
     }
 
-    //Free the socket pointer
-    free(socket_desc);
+    //cierro el socket
+    free( (void *) sock );
 
     return 0;
 }

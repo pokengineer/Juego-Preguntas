@@ -7,5 +7,5 @@ servidor:
 	g++ server.c -lpthread -o server
 
 clean:
-	rm cliente servidor 2> /dev/null
+	rm cliente server 2> /dev/null
 	
