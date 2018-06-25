@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(8888);
+    server.sin_port = htons(8886);
 
     //Bind
     if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
@@ -108,7 +108,7 @@ void *connection_handler(void *socket_desc)
         int i = 0;
         if (*line == 'P') //si es pregunta
         {
-            printf("\nPREGUNTA: %s", (line + 3 * sizeof(char)));
+            //printf("\nPREGUNTA: %s", (line + 3 * sizeof(char)));
             memset(client_message, '\0', sizeof(client_message));
             strcpy(client_message, (line + 3 * sizeof(char)));
             write(sock, client_message, strlen(client_message));
@@ -122,14 +122,14 @@ void *connection_handler(void *socket_desc)
                 {
                     correcta = i;
                     //guardo si es la correcta
-                    printf("%d- %s", i, (line + 4 * sizeof(char)));
+                    //printf("%d- %s", i, (line + 4 * sizeof(char)));
                     memset(client_message, '\0', sizeof(client_message));
                     strcpy(client_message, (line + 4 * sizeof(char)));
                     write(sock, client_message, strlen(client_message));
                 }
                 else
                 {
-                    printf("%d- %s", i, (line + 3 * sizeof(char)));
+                    //printf("%d- %s", i, (line + 3 * sizeof(char)));
                     memset(client_message, '\0', sizeof(client_message));
                     strcpy(client_message, (line + 3 * sizeof(char)));
                     write(sock, client_message, strlen(client_message));
@@ -155,7 +155,7 @@ void *connection_handler(void *socket_desc)
         int resp = client_message[0] - '0';
         if (resp == correcta)
         {
-            printf("bien ahi pisculichi\n");
+            //printf("bien ahi pisculichi\n");
             puntaje++;
         }
         puts(client_message);
@@ -166,7 +166,7 @@ void *connection_handler(void *socket_desc)
 
     char resultado[100];
     sprintf(resultado, "hiciste %d puntos\n%s", puntaje, chau);
-    printf("hiciste %d puntos\n%s", puntaje, chau);
+    //printf("hiciste %d puntos\n%s", puntaje, chau);
     write(sock, resultado, strlen(resultado));
     write(sock, separator, strlen(separator));
 
