@@ -1,5 +1,5 @@
 /*
-    C ECHO client example using sockets
+    Cliente
 */
 #include <stdio.h>      //printf
 #include <string.h>     //strlen
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     char message[1000], server_reply[2000];
     char separator[5] = "|", chau[100] = "gracias, vuelva pronto", *flag = NULL;
 
-    //Create socket
+    //crear socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
 
-    //Connect to remote server
+    //Conectarse
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
         perror("connect failed. Error");
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     puts("Connected\n");
 
-    //keep communicating with server
+    //Mantener comunicacion
     while (1)
     {
         memset(server_reply, '\0', sizeof(server_reply));
@@ -70,16 +70,30 @@ int main(int argc, char *argv[])
             break;
         }
 
-        printf("\nEnter message : ");
+        printf("\nRespuesta : ");
         scanf("%s", message);
 
-        //Send some data
+        flag = strstr(server_reply, "chau" );  //el cliente puede abandonar el juego en cualquier momento escribiendo "chau"
+        if (flag)
+        {
+            break;
+        }
+
+        //Mandar respuesta
         if (send(sock, message, strlen(message), 0) < 0)
         {
             puts("Send failed");
             return 1;
         }
     }
+
+    // //recoive quien es el ganador final
+    // memset(server_reply, '\0', sizeof(server_reply));
+    //     if (recv(sock, server_reply, 2000, 0) < 0)
+    //     {
+    //         puts("recv failed");
+    //         break;
+    //     }
 
     close(sock);
     return 0;

@@ -1,5 +1,5 @@
 /*
-    C socket server example, handles multiple clients using threads
+    Servidor del juego
 */
 
 #include <stdio.h>
@@ -88,7 +88,7 @@ void *connection_handler(void *socket_desc)
     int read_size;
     char *message, client_message[2000];
     memset(client_message, '\0', sizeof(client_message));
-    char separator[5] = "|", chau[100]= "gracias, vuelva pronto";
+    char separator[5] = "|", chau[100]= "gracias, vuelva pronto", *flag = NULL;
     ////////////////////////////////////////////////////////////
     FILE *fp;
     char *line = NULL;
@@ -144,6 +144,14 @@ void *connection_handler(void *socket_desc)
             puts("recv failed");
             break;
         }
+
+        flag = strstr(client_message, "chau" ); //el cliente se desconecta
+        if (flag)
+        {
+            break;
+        }
+
+
         int resp = client_message[0] - '0';
         if (resp == correcta)
         {
@@ -154,7 +162,7 @@ void *connection_handler(void *socket_desc)
     }
 
 
-    puts("flag1");
+    //puts("flag1");
 
     char resultado[100];
     sprintf(resultado, "hiciste %d puntos\n%s", puntaje, chau);
@@ -163,7 +171,7 @@ void *connection_handler(void *socket_desc)
     write(sock, separator, strlen(separator));
 
     ///////////////////////////////////////////////////////////////
-
+    
     if (read_size == 0)
     {
         puts("Client disconnected");
